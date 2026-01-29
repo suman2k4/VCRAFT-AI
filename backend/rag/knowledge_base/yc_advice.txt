@@ -1,0 +1,104 @@
+# Y Combinator Startup Advice - Core Principles
+
+## The Importance of Problem-Solution Fit
+
+The best startups solve real problems that founders have experienced themselves. When evaluating a startup idea, ask: "Is this a problem that affects many people?" and "How painful is this problem?"
+
+A common mistake is building a solution looking for a problem. Start with the problem, not the solution. Talk to potential customers extensively before building anything.
+
+## Market Size Matters
+
+Your market should be large enough to build a billion-dollar company. A good rule of thumb: Can you reach $100M in revenue? If not, the market may be too small.
+
+However, be wary of "made-up" TAM calculations. Investors want to see bottom-up market sizing: number of potential customers × revenue per customer.
+
+## Revenue Model Clarity
+
+Can you explain your revenue model in one sentence? The best business models are simple and obvious. Common models include:
+- SaaS: Monthly recurring revenue with clear unit economics
+- Marketplace: Take rate on transactions
+- Consumer: Ads or subscriptions
+
+For SaaS companies, key metrics include:
+- Monthly Recurring Revenue (MRR)
+- Customer Acquisition Cost (CAC)
+- Lifetime Value (LTV)
+- LTV:CAC ratio should be > 3:1
+
+## Product-Market Fit
+
+The only thing that matters for an early-stage startup is reaching product-market fit. How do you know you have PMF?
+- Users are actively using your product
+- They're referring others
+- You have strong retention (>60% DAU/MAU for consumer)
+- Growth is organic
+
+Don't scale before PMF. It's like stepping on the gas before you know where you're going.
+
+## Team and Execution
+
+Investors bet on founders, not just ideas. What makes a great founding team?
+- Deep expertise in the problem domain
+- Complementary skills (technical + business)
+- Ability to execute quickly
+- Resilience and determination
+
+The best founders have "founder-market fit" - they're uniquely positioned to solve this problem.
+
+## Traction Speaks Louder Than Words
+
+What investors really want to see:
+- Revenue (even if small)
+- User growth metrics
+- Retention data
+- Letters of intent from customers
+- Any signal that real people want your product
+
+A demo is not traction. Traction is evidence that your business model works.
+
+## Defensibility and Moat
+
+Why can't Google/Facebook/Amazon build this? What's your competitive advantage?
+
+Common moats:
+- Network effects (value increases with more users)
+- Proprietary technology or data
+- Brand and community
+- Regulatory advantages
+- High switching costs
+
+First-mover advantage alone is NOT a moat.
+
+## Scalability
+
+Can your business model scale? Consider:
+- Are margins improving with scale?
+- Can you serve 10x users without 10x costs?
+- Is your customer acquisition scalable?
+
+Service businesses often struggle with scalability. Software scales beautifully.
+
+## The Pitch Itself
+
+Your pitch should answer:
+1. What problem are you solving?
+2. How big is the opportunity?
+3. What's your solution?
+4. Why now?
+5. Why your team?
+6. What traction do you have?
+7. What are you asking for?
+
+Keep it simple. If you can't explain it clearly, investors assume you don't understand your own business.
+
+## Red Flags Investors Look For
+
+- Solutions looking for problems
+- Made-up market sizes
+- No clear path to revenue
+- Team with no relevant experience
+- Ignoring competition
+- Unrealistic financial projections
+- Asking for too much money too early
+
+Be honest about challenges. Investors respect founders who understand their risks.

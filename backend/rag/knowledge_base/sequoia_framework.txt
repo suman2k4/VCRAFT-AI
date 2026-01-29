@@ -1,0 +1,143 @@
+# Sequoia Capital - Framework for Evaluating Startups
+
+## The Elements of Enduring Companies
+
+Sequoia looks for companies that can endure and grow for decades. Key elements include:
+
+### 1. Clarity of Purpose
+
+The best companies have a clear mission that inspires employees and customers. Can you articulate why your company exists beyond making money?
+
+Example: "We help small businesses compete with enterprises by democratizing access to technology."
+
+### 2. Market Leadership Potential
+
+We invest in companies that can become category leaders. This requires:
+- Being in a large or rapidly growing market
+- Having a unique insight about how the market will evolve
+- Building products that are 10x better than alternatives
+
+### 3. Sustainable Competitive Advantage
+
+Ask yourself: "What prevents competitors from copying us?"
+
+Strong advantages include:
+- Proprietary technology that's hard to replicate
+- Network effects (Uber, Facebook, Airbnb)
+- Economies of scale
+- Unique data assets
+- Strong brand and customer loyalty
+
+### 4. Business Model and Unit Economics
+
+Your business model should show a clear path to profitability:
+
+For SaaS businesses:
+- CAC Payback Period < 12 months
+- Gross Margin > 70%
+- Net Revenue Retention > 100%
+- Rule of 40: Growth % + Profit Margin % > 40%
+
+For marketplaces:
+- Take rate that sustains operations
+- Balanced supply and demand
+- Low customer churn
+
+### 5. Team Quality and Vision
+
+Founding teams should demonstrate:
+- Deep domain expertise
+- Track record of execution
+- Ability to attract top talent
+- Long-term vision (10+ years)
+- Adaptability and learning speed
+
+The CEO should be able to articulate a compelling vision that attracts world-class talent.
+
+## Investment Stages
+
+### Seed Stage ($500K - $2M)
+Looking for:
+- Exceptional founders
+- Large market opportunity
+- Early product or prototype
+- Initial customer validation
+
+### Series A ($2M - $15M)
+Need to demonstrate:
+- Product-market fit
+- Repeatable customer acquisition
+- Clear unit economics
+- Path to $100M+ revenue
+
+### Growth Stage ($15M+)
+Must have:
+- Proven business model
+- Strong revenue growth (>100% YoY)
+- Path to market leadership
+- Operational excellence
+
+## Key Questions We Ask
+
+1. **Problem**: Is this a real, painful problem? Who has it? How are they solving it today?
+
+2. **Solution**: Why is your solution 10x better? What's the innovation?
+
+3. **Market**: How big is the market today? How fast is it growing? Can you reach $1B in revenue?
+
+4. **Competition**: Who else is solving this? What's your unfair advantage?
+
+5. **Traction**: What metrics prove customers want this? Revenue? Growth? Retention?
+
+6. **Team**: Why is your team uniquely qualified? What's your founder-market fit?
+
+7. **Vision**: Where is this company in 10 years? Can you build a generational company?
+
+## Red Flags
+
+- Vague problem definition
+- No clear target customer
+- Crowded market with no differentiation
+- Weak founding team
+- Poor unit economics
+- Unrealistic growth projections
+- Founder unwillingness to take feedback
+
+## What Makes a Great Pitch
+
+1. **Hook**: Start with the problem and why it matters
+2. **Solution**: Clearly explain what you've built
+3. **Traction**: Show proof it's working (metrics, customers, revenue)
+4. **Market**: Demonstrate the opportunity size
+5. **Competitive Edge**: Explain your moat
+6. **Team**: Show why you'll win
+7. **Ask**: Be clear about what you need
+
+Use storytelling. The best pitches are memorable narratives, not data dumps.
+
+## Metrics That Matter
+
+For different business models:
+
+**SaaS:**
+- MRR Growth Rate
+- Net Dollar Retention
+- CAC / LTV Ratio
+- Gross Margin
+- Burn Multiple ($ burned / Net New ARR)
+
+**Consumer:**
+- Daily/Monthly Active Users
+- Retention Curves
+- Viral Coefficient
+- Session Frequency
+- Monetization Rate
+
+**Marketplace:**
+- GMV Growth
+- Take Rate
+- Cohort Retention
+- Supply/Demand Balance
+- Unit Economics per Transaction
+
+Don't present vanity metrics. Show metrics that demonstrate business health.
