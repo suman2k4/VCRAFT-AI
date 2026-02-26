@@ -37,15 +37,20 @@ export const getUserPitches = async (userId) => {
   try {
     const q = query(
       collection(db, 'pitches'),
-      where('user_id', '==', userId),
-      orderBy('created_at', 'desc'),
-      limit(20)
+      where('user_id', '==', userId)
     )
     const querySnapshot = await getDocs(q)
-    return querySnapshot.docs.map(doc => ({
+    const results = querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data(),
     }))
+    // Sort client-side to avoid requiring a Firestore composite index
+    results.sort((a, b) => {
+      const aTime = a.created_at?.toMillis?.() || 0
+      const bTime = b.created_at?.toMillis?.() || 0
+      return bTime - aTime
+    })
+    return results.slice(0, 20)
   } catch (error) {
     console.error('Error fetching pitches:', error)
     throw error

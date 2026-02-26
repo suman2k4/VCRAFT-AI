@@ -66,13 +66,15 @@ For each dimension:
 
 CRITICAL REQUIREMENTS:
 - Use ONLY the VC knowledge provided above
-- If information is insufficient, say "Insufficient detail provided on [aspect]"
-- Be specific, not generic
+- If information is insufficient, say "Insufficient detail provided on [aspect]" and give a lower score accordingly
+- Be specific, not generic - reference details from the pitch
 - Provide actionable recommendations
 - Match the evaluation criteria to the investor persona
-- Calculate an overall score (weighted average of sections)
+- Calculate overall_score as a weighted average of section scores
+- Scores MUST vary based on pitch quality: weak pitches get 20-40, average get 50-65, strong get 70-85, exceptional get 85-100
+- Do NOT default all scores to the same number
 
-OUTPUT FORMAT (JSON ONLY):
+OUTPUT FORMAT (respond with ONLY this JSON, no other text before or after):
 {{
     "overall_score": <integer 0-100>,
     "section_scores": {{
@@ -83,11 +85,11 @@ OUTPUT FORMAT (JSON ONLY):
         "scalability": <integer 0-100>
     }},
     "feedback": {{
-        "problem_clarity": "<specific feedback>",
-        "market_opportunity": "<specific feedback>",
-        "revenue_model": "<specific feedback>",
-        "competitive_moat": "<specific feedback>",
-        "scalability": "<specific feedback>"
+        "problem_clarity": "<2-3 sentences of specific feedback>",
+        "market_opportunity": "<2-3 sentences of specific feedback>",
+        "revenue_model": "<2-3 sentences of specific feedback>",
+        "competitive_moat": "<2-3 sentences of specific feedback>",
+        "scalability": "<2-3 sentences of specific feedback>"
     }},
     "recommendations": [
         "<actionable recommendation 1>",
@@ -97,7 +99,7 @@ OUTPUT FORMAT (JSON ONLY):
     ]
 }}
 
-Respond ONLY with valid JSON. No other text.
+IMPORTANT: Output ONLY the JSON object above. No markdown, no explanation, no thinking - just the raw JSON.
 """
     
     return prompt.strip()

@@ -101,22 +101,22 @@ const AnalysisResult = ({ result }) => {
       {/* Actions */}
       <div className="flex gap-4">
         <Link 
-          to={`/qa/${analysis_id}`}
+          to={`/chat/${analysis_id}`}
           className="btn-primary flex-1 text-center"
         >
-          Practice VC Q&A
+          💬 Chat with VC Investor
+        </Link>
+        <Link 
+          to={`/qa/${analysis_id}`}
+          className="btn-secondary flex-1 text-center"
+        >
+          Classic Q&A
         </Link>
         <Link 
           to="/dashboard"
           className="btn-secondary flex-1 text-center"
         >
-          View History
-        </Link>
-        <Link 
-          to="/submit"
-          className="btn-secondary flex-1 text-center"
-        >
-          New Analysis
+          Dashboard
         </Link>
       </div>
     </div>

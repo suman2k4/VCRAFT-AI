@@ -13,6 +13,7 @@ const QASimulator = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [answers, setAnswers] = useState([])
+  const [pitchSummary, setPitchSummary] = useState('')
 
   useEffect(() => {
     const fetchData = async () => {
@@ -20,15 +21,23 @@ const QASimulator = () => {
         const pitchData = await getPitchAnalysis(analysisId)
         setPitch(pitchData)
         
-        // Generate questions
+        // Build pitch summary for backend context
+        const summary = `${pitchData.startup_idea}\nIndustry: ${pitchData.industry}\nStage: ${pitchData.investor_stage}`
+        setPitchSummary(summary)
+        
+        // Use the backend analysis_id if available, otherwise use the Firestore doc ID
+        const backendAnalysisId = pitchData.analysis_result?.analysis_id || analysisId
+        
+        // Generate questions - pass pitch summary inline for robustness
         const questionsData = await generateQuestions(
-          analysisId,
+          backendAnalysisId,
           pitchData.investor_persona,
-          5
+          5,
+          summary
         )
         setQuestions(questionsData.questions)
       } catch (err) {
-        setError('Failed to load Q&A session')
+        setError('Failed to load Q&A session. Please try analyzing your pitch first.')
         console.error(err)
       }
     }
@@ -46,27 +55,36 @@ const QASimulator = () => {
       setLoading(true)
       setError('')
       
+      const currentQuestion = questions[currentQuestionIndex]
+      const backendAnalysisId = pitch?.analysis_result?.analysis_id || analysisId
+      
       const result = await evaluateAnswer(
-        questions[currentQuestionIndex].id,
+        currentQuestion.id,
         answer,
-        analysisId
+        backendAnalysisId,
+        currentQuestion.question,
+        pitchSummary
       )
       
       setEvaluation(result)
       
       // Save answer
       const newAnswers = [...answers, {
-        question: questions[currentQuestionIndex].question,
+        question: currentQuestion.question,
         answer: answer,
         evaluation: result,
       }]
       setAnswers(newAnswers)
       
       // Save to Firestore
-      await saveQASession(analysisId, questions, newAnswers)
+      try {
+        await saveQASession(analysisId, questions, newAnswers)
+      } catch (saveErr) {
+        console.warn('Failed to save Q&A session to Firestore:', saveErr)
+      }
       
     } catch (err) {
-      setError('Failed to evaluate answer')
+      setError('Failed to evaluate answer. Please try again.')
       console.error(err)
     } finally {
       setLoading(false)

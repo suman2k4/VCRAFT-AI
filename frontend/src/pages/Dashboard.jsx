@@ -163,12 +163,20 @@ const Dashboard = () => {
                   ))}
                 </div>
 
-                <Link 
-                  to={`/qa/${pitch.id}`}
-                  className="btn-primary text-sm inline-block"
-                >
-                  Practice Q&A
-                </Link>
+                <div className="flex gap-2">
+                  <Link 
+                    to={`/chat/${pitch.id}`}
+                    className="btn-primary text-sm inline-block"
+                  >
+                    💬 Chat Q&A
+                  </Link>
+                  <Link 
+                    to={`/qa/${pitch.id}`}
+                    className="btn-secondary text-sm inline-block"
+                  >
+                    Classic Q&A
+                  </Link>
+                </div>
               </div>
             ))}
           </div>

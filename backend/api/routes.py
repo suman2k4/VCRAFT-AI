@@ -2,8 +2,14 @@ from fastapi import APIRouter, HTTPException
 from models.pitch import PitchRequest
 from models.analysis import AnalysisResponse
 from models.qa import QuestionRequest, QuestionResponse, AnswerRequest, AnswerEvaluation
+from models.chat import (
+    ChatStartRequest, ChatStartResponse,
+    ChatMessageRequest, ChatMessageResponse
+)
 from services.pitch_analyzer import get_pitch_analyzer
 from services.qa_simulator import get_qa_simulator
+from services.chatbot_service import get_chatbot_service
+from prompts.personas import get_persona
 import logging
 
 # Configure logging
@@ -96,16 +102,23 @@ async def generate_questions(request: QuestionRequest):
     Generate VC questions based on pitch and investor persona.
     
     Uses RAG to retrieve questioning tactics from VC knowledge base.
+    Accepts inline pitch_summary as fallback when cache is empty.
     """
     try:
         qa_sim = get_qa_simulator()
         
-        # Get pitch context
+        # Get pitch context - try cache first, then use inline summary
         pitch_summary = qa_sim.get_pitch_context(request.analysis_id)
+        if not pitch_summary and request.pitch_summary:
+            pitch_summary = request.pitch_summary
+            # Cache it for subsequent requests
+            qa_sim.cache_pitch_context(request.analysis_id, pitch_summary)
+            logger.info(f"[GENERATE-QUESTIONS] Using inline pitch_summary, cached for {request.analysis_id}")
+        
         if not pitch_summary:
             raise HTTPException(
                 status_code=404,
-                detail="Pitch analysis not found. Analyze pitch first."
+                detail="Pitch analysis not found. Please provide pitch_summary or analyze pitch first."
             )
         
         # Generate questions
@@ -116,7 +129,7 @@ async def generate_questions(request: QuestionRequest):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error in generate_questions: {e}")
+        logger.error(f"[GENERATE-QUESTIONS] Error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error during question generation")
 
 
@@ -126,21 +139,25 @@ async def evaluate_answer(request: AnswerRequest):
     Evaluate founder's answer to a VC question.
     
     Provides score (0-10) and actionable feedback.
+    Accepts inline pitch_summary and question_text for robustness.
     """
     try:
         qa_sim = get_qa_simulator()
         
-        # Get pitch context
+        # Get pitch context - try cache first, then use inline summary
         pitch_context = qa_sim.get_pitch_context(request.analysis_id)
+        if not pitch_context and request.pitch_summary:
+            pitch_context = request.pitch_summary
+            qa_sim.cache_pitch_context(request.analysis_id, pitch_context)
+        
         if not pitch_context:
             raise HTTPException(
                 status_code=404,
-                detail="Pitch analysis not found"
+                detail="Pitch analysis not found. Please provide pitch_summary."
             )
         
-        # For now, we'll use the question_id as the question text
-        # In production, store questions in database
-        question_text = f"Question {request.question_id}"
+        # Use provided question text, or fallback to generic
+        question_text = request.question_text or f"Question {request.question_id}"
         
         # Evaluate answer
         result = await qa_sim.evaluate_answer(request, pitch_context, question_text)
@@ -150,5 +167,83 @@ async def evaluate_answer(request: AnswerRequest):
     except HTTPException:
         raise
     except Exception as e:
-        print(f"Error in evaluate_answer: {e}")
+        logger.error(f"[EVALUATE-ANSWER] Error: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error during answer evaluation")
+
+
+# =============================================================================
+# CHATBOT Q&A ENDPOINTS
+# =============================================================================
+
+@router.post("/chat/start", response_model=ChatStartResponse)
+async def chat_start(request: ChatStartRequest):
+    """
+    Start a new chatbot Q&A session.
+    
+    Creates a conversational session where an AI investor persona
+    interviews the founder about their startup.
+    """
+    try:
+        chatbot = get_chatbot_service()
+        persona = get_persona(request.investor_persona)
+        
+        # Create session
+        session = chatbot.create_session(
+            pitch_summary=request.pitch_summary,
+            industry=request.industry,
+            investor_persona=request.investor_persona,
+            investor_stage=request.investor_stage,
+        )
+        
+        # Generate greeting + first question
+        greeting = await chatbot.generate_greeting(session)
+        
+        logger.info(f"[CHAT-START] Session {session.session_id} created for {request.investor_persona}")
+        
+        return ChatStartResponse(
+            session_id=session.session_id,
+            investor_name=persona["name"],
+            investor_description=persona["description"],
+            greeting=greeting,
+        )
+        
+    except Exception as e:
+        logger.error(f"[CHAT-START] Error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Failed to start chat session: {str(e)}")
+
+
+@router.post("/chat/message", response_model=ChatMessageResponse)
+async def chat_message(request: ChatMessageRequest):
+    """
+    Send a message in an ongoing chat session.
+    
+    The investor will evaluate the answer and ask a follow-up question.
+    """
+    try:
+        chatbot = get_chatbot_service()
+        session = chatbot.get_session(request.session_id)
+        
+        if not session:
+            raise HTTPException(
+                status_code=404,
+                detail="Chat session not found. Please start a new session."
+            )
+        
+        if session.is_complete():
+            raise HTTPException(
+                status_code=400,
+                detail="This Q&A session is already complete."
+            )
+        
+        # Process the founder's message
+        result = await chatbot.process_founder_message(session, request.message)
+        
+        logger.info(f"[CHAT-MSG] Session {request.session_id}: Q{result['questions_asked']}, Score: {result['score']}")
+        
+        return ChatMessageResponse(**result)
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[CHAT-MSG] Error: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to process message")

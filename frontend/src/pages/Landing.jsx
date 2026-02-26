@@ -79,11 +79,11 @@ const Landing = () => {
           <div className="card hover:shadow-lg transition-shadow">
             <div className="text-primary-600 text-4xl mb-4">💬</div>
             <h3 className="text-xl font-bold text-gray-900 mb-3">
-              VC Q&A Simulator
+              Interactive VC Chatbot
             </h3>
             <p className="text-gray-600">
-              Practice answering tough investor questions. Get scored on logic, 
-              metrics, and clarity before your real pitch.
+              Chat with AI investor personas in real-time. Practice answering 
+              tough questions and get scored on logic, metrics, and clarity.
             </p>
           </div>
         </div>

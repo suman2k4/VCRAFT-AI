@@ -145,6 +145,18 @@ class PitchAnalyzer:
         try:
             analysis_data = await self.llm_service.generate(prompt, system_prompt)
             logger.info(f"[ANALYSIS-{analysis_id}] LLM generation successful")
+            logger.info(f"[ANALYSIS-{analysis_id}] LLM returned keys: {list(analysis_data.keys()) if isinstance(analysis_data, dict) else type(analysis_data)}")
+            
+            # Validate that scores are actually present and numeric
+            if isinstance(analysis_data, dict) and "overall_score" in analysis_data:
+                score = analysis_data["overall_score"]
+                if isinstance(score, str):
+                    analysis_data["overall_score"] = int(score)
+                # Validate section scores are numbers
+                if "section_scores" in analysis_data:
+                    for key, val in analysis_data["section_scores"].items():
+                        if isinstance(val, str):
+                            analysis_data["section_scores"][key] = int(val)
             
         except Exception as e:
             logger.error(f"[ANALYSIS-{analysis_id}] LLM generation failed: {type(e).__name__}: {e}")
@@ -188,59 +200,68 @@ class PitchAnalyzer:
         """
         Create a fallback analysis when LLM fails.
         
-        Returns basic structured feedback explaining the issue.
+        Returns structured feedback explaining the issue.
+        NOTE: This should rarely be reached now that we have retry logic.
         """
-        logger.info("[FALLBACK] Creating fallback analysis")
+        logger.error(f"[FALLBACK] Creating fallback analysis. Error: {error_msg}")
         return {
-            "overall_score": 5.0,
+            "overall_score": 0,
             "section_scores": {
-                "problem": 5.0,
-                "solution": 5.0,
-                "market": 5.0,
-                "team": 5.0,
-                "traction": 5.0
+                "problem_clarity": 0,
+                "market_opportunity": 0,
+                "revenue_model": 0,
+                "competitive_moat": 0,
+                "scalability": 0
             },
             "feedback": {
-                "problem": "Unable to complete full analysis due to a technical issue.",
-                "solution": f"Your {pitch_request.industry} solution shows promise. Please try again for detailed feedback.",
-                "market": "Market analysis temporarily unavailable.",
-                "team": "Team evaluation temporarily unavailable.",
-                "traction": "Traction assessment temporarily unavailable."
+                "problem_clarity": f"Analysis failed due to a technical issue: {error_msg[:150]}. Please try again.",
+                "market_opportunity": "Analysis could not be completed. Please resubmit your pitch.",
+                "revenue_model": "Analysis could not be completed. Please resubmit your pitch.",
+                "competitive_moat": "Analysis could not be completed. Please resubmit your pitch.",
+                "scalability": "Analysis could not be completed. Please resubmit your pitch."
             },
             "recommendations": [
-                "Our analysis service encountered a temporary issue. Please try again in a moment.",
-                f"Technical details: {error_msg[:100]}",
-                "If this persists, please contact support with your analysis ID."
+                "This analysis failed due to a technical issue. Please try submitting again.",
+                "If the problem persists, try simplifying your pitch description or check your internet connection.",
+                f"Error details: {error_msg[:200]}"
             ]
         }
     
     def _fix_incomplete_analysis(self, data: Dict[str, Any], missing_fields: list) -> Dict[str, Any]:
         """
         Fill in missing fields in incomplete LLM response.
+        Computes overall_score from section_scores if available.
         """
         logger.info(f"[FIX] Filling missing fields: {missing_fields}")
         
         defaults = {
-            "overall_score": 5.0,
             "section_scores": {
-                "problem": 5.0,
-                "solution": 5.0,
-                "market": 5.0,
-                "team": 5.0,
-                "traction": 5.0
+                "problem_clarity": 50,
+                "market_opportunity": 50,
+                "revenue_model": 50,
+                "competitive_moat": 50,
+                "scalability": 50
             },
             "feedback": {
-                "problem": "Evaluation incomplete",
-                "solution": "Evaluation incomplete",
-                "market": "Evaluation incomplete",
-                "team": "Evaluation incomplete",
-                "traction": "Evaluation incomplete"
+                "problem_clarity": "Evaluation incomplete for this section.",
+                "market_opportunity": "Evaluation incomplete for this section.",
+                "revenue_model": "Evaluation incomplete for this section.",
+                "competitive_moat": "Evaluation incomplete for this section.",
+                "scalability": "Evaluation incomplete for this section."
             },
             "recommendations": ["Please try again for complete analysis"]
         }
         
         for field in missing_fields:
-            data[field] = defaults[field]
+            if field == "overall_score":
+                # Compute from section scores if available
+                scores = data.get("section_scores", defaults["section_scores"])
+                if isinstance(scores, dict) and scores:
+                    data["overall_score"] = round(sum(scores.values()) / len(scores))
+                else:
+                    data["overall_score"] = 50
+            else:
+                data[field] = defaults[field]
         
         return data
     
@@ -249,27 +270,28 @@ class PitchAnalyzer:
         Emergency fallback when everything else fails.
         
         Always returns a valid AnalysisResponse - NEVER crashes.
+        Uses score of 0 to signal failure clearly.
         """
         logger.error("[EMERGENCY] Creating emergency fallback response")
         return AnalysisResponse(
             analysis_id=analysis_id,
-            overall_score=5.0,
+            overall_score=0,
             section_scores={
-                "problem": 5.0,
-                "solution": 5.0,
-                "market": 5.0,
-                "team": 5.0,
-                "traction": 5.0
+                "problem_clarity": 0,
+                "market_opportunity": 0,
+                "revenue_model": 0,
+                "competitive_moat": 0,
+                "scalability": 0
             },
             feedback={
-                "problem": "Analysis system temporarily unavailable",
-                "solution": f"Your {pitch_request.industry} startup idea has been received",
-                "market": "Please try again shortly",
-                "team": "Our team is investigating",
-                "traction": "Thank you for your patience"
+                "problem_clarity": "Analysis system encountered an error. Please try again.",
+                "market_opportunity": f"Your {pitch_request.industry} startup idea was received but could not be analyzed.",
+                "revenue_model": "Please try submitting again.",
+                "competitive_moat": "The AI analysis service is temporarily experiencing issues.",
+                "scalability": "Please try again in a few moments."
             },
             recommendations=[
-                "Our analysis service is experiencing issues. Please try again in a few minutes.",
+                "This analysis failed due to a technical issue. Please try submitting again.",
                 "If this problem persists, contact support with this analysis ID.",
                 f"Analysis ID: {analysis_id}"
             ]
