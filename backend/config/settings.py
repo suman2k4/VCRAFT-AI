@@ -20,6 +20,9 @@ class Settings(BaseSettings):
     port: int = 8000
     environment: str = "development"
     
+    # Deployment
+    frontend_url: str = ""  # Set to your Vercel URL in production
+    
     class Config:
         env_file = ".env"
 

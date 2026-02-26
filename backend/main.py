@@ -20,10 +20,17 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# CORS Configuration
+# CORS Configuration - allow localhost for dev + deployed frontend URL
+allowed_origins = [
+    "http://localhost:3000",
+    "http://localhost:5173",
+]
+if settings.frontend_url:
+    allowed_origins.append(settings.frontend_url.rstrip("/"))
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173"],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
