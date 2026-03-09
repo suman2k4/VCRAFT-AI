@@ -6,13 +6,12 @@ asks tough questions and evaluates founder responses in real-time.
 """
 
 import uuid
-import json
-import asyncio
 import logging
 from typing import Dict, Any, Optional, List
 from services.llm_service import get_llm_service
 from rag.retriever import get_rag_retriever
 from prompts.personas import get_persona, get_persona_context
+from services.session_store import get_chat_store
 from config.settings import get_settings
 
 logger = logging.getLogger(__name__)
@@ -57,7 +56,7 @@ class ChatbotService:
     def __init__(self):
         self.llm_service = get_llm_service()
         self.rag_retriever = get_rag_retriever()
-        self.sessions: Dict[str, ChatSession] = {}
+        self.store = get_chat_store()
 
     def create_session(self, pitch_summary: str, industry: str,
                        investor_persona: str, investor_stage: str) -> ChatSession:
@@ -69,12 +68,55 @@ class ChatbotService:
             investor_persona=investor_persona,
             investor_stage=investor_stage,
         )
-        self.sessions[session_id] = session
+        self.store.set(session_id, {
+            "pitch_summary": pitch_summary,
+            "industry": industry,
+            "investor_persona": investor_persona,
+            "investor_stage": investor_stage,
+            "history": [],
+            "scores": [],
+            "questions_asked": 0,
+            "max_questions": 7,
+        })
+        session = ChatSession(
+            session_id=session_id,
+            pitch_summary=pitch_summary,
+            industry=industry,
+            investor_persona=investor_persona,
+            investor_stage=investor_stage,
+        )
         logger.info(f"[CHAT] Created session {session_id} for {investor_persona}")
         return session
 
     def get_session(self, session_id: str) -> Optional[ChatSession]:
-        return self.sessions.get(session_id)
+        data = self.store.get(session_id)
+        if data is None:
+            return None
+        session = ChatSession(
+            session_id=session_id,
+            pitch_summary=data["pitch_summary"],
+            industry=data["industry"],
+            investor_persona=data["investor_persona"],
+            investor_stage=data["investor_stage"],
+        )
+        session.history = data.get("history", [])
+        session.scores = data.get("scores", [])
+        session.questions_asked = data.get("questions_asked", 0)
+        session.max_questions = data.get("max_questions", 7)
+        return session
+
+    def _save_session(self, session: ChatSession) -> None:
+        """Persist session state back to store."""
+        self.store.update(session.session_id, {
+            "pitch_summary": session.pitch_summary,
+            "industry": session.industry,
+            "investor_persona": session.investor_persona,
+            "investor_stage": session.investor_stage,
+            "history": session.history,
+            "scores": session.scores,
+            "questions_asked": session.questions_asked,
+            "max_questions": session.max_questions,
+        })
 
     async def generate_greeting(self, session: ChatSession) -> str:
         """Generate the investor's opening greeting and first question."""
@@ -128,7 +170,8 @@ Always respond in valid JSON format."""
         full_message = f"{greeting}\n\n{question}"
         session.add_message("investor", full_message)
         session.questions_asked = 1
-        
+        self._save_session(session)
+
         return full_message
 
     async def process_founder_message(self, session: ChatSession, 
@@ -240,6 +283,7 @@ Evaluate honestly but constructively. Always respond in valid JSON."""
             session.questions_asked += 1
 
         session.add_message("investor", reply)
+        self._save_session(session)
 
         session_complete = is_final or session.is_complete()
 

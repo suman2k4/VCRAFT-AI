@@ -17,7 +17,10 @@
   - Optional additional details textarea
   - Industry input field
   - Funding stage dropdown (seed, series_a, series_b, growth)
-  - Investor persona dropdown (4 personas)
+  - Investor persona dropdown (6 personas with descriptions)
+  - PDF pitch deck upload (drag-drop with file validation)
+  - Character counter
+  - Toast notifications for feedback
   - Form validation
   - Loading states
   - Error handling
@@ -30,6 +33,12 @@
   - Quick access to Q&A practice
   - Date formatting
   - Empty state handling
+  - **Analytics Tab** (Phase 2)
+    - Score trend bar chart (last 5 pitches)
+    - Skill breakdown with progress bars
+    - Score distribution visualization
+    - Persona usage badges
+    - Compare pitches link
 
 - ✅ **Q&A Simulator**
   - Progress bar showing question X of 5
@@ -45,9 +54,12 @@
 - ✅ **Navbar**
   - Logo and branding
   - Conditional links (authenticated vs guest)
-  - User email display
+  - User email display (truncated)
   - Login/Signup buttons
   - Logout functionality
+  - Mobile hamburger menu (md:hidden)
+  - Sticky positioning (top-0 z-40)
+  - Compare link
 
 - ✅ **Footer**
   - Branding
@@ -59,6 +71,7 @@
   - Error display
   - Switch to signup
   - Close button
+  - Password reset ("Forgot password?" link)
 
 - ✅ **SignupForm Modal**
   - Email/password inputs
@@ -78,11 +91,24 @@
   - Detailed feedback sections
   - Recommendations list
   - Action buttons (Q&A, Dashboard, New Analysis)
+  - Export as PDF report (browser print)
+
+- ✅ **Toast Notification System** (Phase 2)
+  - Success/Error/Info/Warning types
+  - Auto-dismiss (4s)
+  - Slide-in animation
+  - Context-based (ToastProvider + useToast)
+
+- ✅ **PitchCompare Page** (Phase 2)
+  - Two pitch selector dropdowns
+  - Overall score comparison with diff badges
+  - Section-by-section mirrored bar charts
+  - Full feedback comparison grid
 
 #### Services & Context
 - ✅ **AuthContext**
   - Firebase auth state management
-  - Signup, login, logout functions
+  - Signup, login, logout, resetPassword functions
   - Token storage
   - Loading state
 
@@ -97,6 +123,7 @@
   - analyzePitch function
   - generateQuestions function
   - evaluateAnswer function
+  - extractPDF function (multipart/form-data)
   - Error handling
 
 - ✅ **Firestore Service**
@@ -154,6 +181,21 @@
 - ✅ **GET /health**
   - Health check
   - Environment info
+
+- ✅ **POST /api/extract-pdf** (Phase 2)
+  - PDF file upload (multipart/form-data)
+  - File type validation (.pdf only)
+  - Size limit (10MB)
+  - PyPDF2 text extraction
+  - Returns text, page count, character count
+
+- ✅ **POST /api/chat/start** (Phase 2)
+  - Start multi-turn VC chatbot session
+  - Persona-aware conversation
+
+- ✅ **POST /api/chat/message** (Phase 2)
+  - Send message in chatbot session
+  - Get AI investor response
 
 - ✅ **GET /** (Root)
   - API info
@@ -238,11 +280,13 @@
   - Design best practices
 
 #### Prompt Engineering
-- ✅ **Personas** (4 types)
+- ✅ **Personas** (6 types)
   - SaaS-Focused Investor (priorities, questions focus)
   - Early-Stage Angel (priorities, questions focus)
   - Growth-Stage VC (priorities, questions focus)
   - Conservative Institutional (priorities, questions focus)
+  - Deep Tech VC (priorities, questions focus) ← Phase 2
+  - Impact Investor (priorities, questions focus) ← Phase 2
 
 - ✅ **Analysis Prompts**
   - Persona context injection
@@ -390,6 +434,8 @@
 - ✅ Firebase auth integration
 - ✅ Token storage in localStorage
 - ✅ Authorization interceptors
+- ✅ Rate limiting middleware (30 req/min/IP) ← Phase 2
+- ✅ Password reset flow ← Phase 2
 
 ---
 
@@ -478,27 +524,32 @@
 ## 📊 Statistics
 
 ### Lines of Code (Estimated)
-- Frontend: ~2,500 lines
-- Backend: ~2,000 lines
-- Documentation: ~3,000 lines
-- **Total: ~7,500 lines**
+- Frontend: ~4,000 lines
+- Backend: ~2,500 lines
+- Documentation: ~3,500 lines
+- **Total: ~10,000 lines**
 
 ### Files Created
-- Frontend: 25+ files
+- Frontend: 30+ files
 - Backend: 30+ files
 - Docs: 8 files
 - Config: 10+ files
-- **Total: 70+ files**
+- **Total: 75+ files**
 
 ### Features Implemented
-- User Authentication: ✅
-- Pitch Analysis: ✅
+- User Authentication (+ password reset): ✅
+- Pitch Analysis (+ PDF upload): ✅
 - RAG System: ✅
 - LLM Integration: ✅
 - Q&A Simulator: ✅
-- Dashboard: ✅
+- Interactive VC Chatbot: ✅
+- Dashboard (+ Analytics): ✅
 - Firestore Integration: ✅
-- **Total: 7 major features**
+- Pitch Comparison: ✅
+- Export PDF: ✅
+- Toast Notifications: ✅
+- Rate Limiting: ✅
+- **Total: 12 major features**
 
 ---
 
@@ -515,19 +566,25 @@ All core features implemented, documented, and ready for:
 
 ---
 
-## 🚀 Next Steps (Optional Enhancements)
+## 🚀 Phase 2 Enhancements (Implemented)
 
-### Phase 2 (Future Work)
-- [ ] PDF pitch deck upload and parsing
-- [ ] Comparison with successful pitch decks
+### ✅ Completed
+- [x] PDF pitch deck upload and parsing (drag-drop + API extraction)
+- [x] Comparison view (side-by-side pitch comparison with diff badges)
+- [x] Export analysis to PDF (browser print with styled report)
+- [x] More investor personas (+2: Deep Tech VC, Impact Investor → 6 total)
+- [x] Advanced analytics dashboard (score trends, skill breakdown, distribution)
+- [x] Rate limiting (30 req/min per IP with middleware)
+- [x] Password reset flow (Firebase sendPasswordResetEmail)
+- [x] Toast notification system (success/error/info/warning)
+- [x] Mobile responsive hamburger menu (sticky nav)
+- [x] Interactive VC Chatbot (multi-turn persona-aware conversations)
+
+### Phase 3 (Future Work)
 - [ ] Team collaboration features
-- [ ] Export analysis to PDF
-- [ ] More investor personas
 - [ ] Multi-language support
-- [ ] Advanced analytics dashboard
 - [ ] Integration with pitch deck tools
 - [ ] Caching layer (Redis)
-- [ ] Rate limiting
 - [ ] Comprehensive testing suite
 - [ ] CI/CD pipeline
 

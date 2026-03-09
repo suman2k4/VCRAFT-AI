@@ -6,6 +6,7 @@ const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
+    'ngrok-skip-browser-warning': 'true',  // Skip ngrok browser interstitial
   },
 })
 
@@ -17,6 +18,22 @@ api.interceptors.request.use(async (config) => {
   }
   return config
 })
+
+// Handle auth errors globally (e.g. expired/revoked tokens)
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      // Token is invalid/expired — clear stored auth and redirect to home
+      localStorage.removeItem('authToken')
+      // Only redirect if not already on the landing page
+      if (window.location.pathname !== '/') {
+        window.location.href = '/'
+      }
+    }
+    return Promise.reject(error)
+  }
+)
 
 // Pitch Analysis API
 export const analyzePitch = async (pitchData) => {
@@ -36,11 +53,12 @@ export const generateQuestions = async (analysisId, persona, numQuestions = 5, p
 }
 
 // Evaluate Answer
-export const evaluateAnswer = async (questionId, answer, analysisId, questionText = '', pitchSummary = '') => {
+export const evaluateAnswer = async (questionId, answer, analysisId, questionText = '', pitchSummary = '', investorPersona = 'saas') => {
   const response = await api.post('/api/evaluate-answer', {
     question_id: questionId,
     answer: answer,
     analysis_id: analysisId,
+    investor_persona: investorPersona || undefined,
     question_text: questionText || undefined,
     pitch_summary: pitchSummary || undefined,
   })
@@ -50,6 +68,23 @@ export const evaluateAnswer = async (questionId, answer, analysisId, questionTex
 // Health Check
 export const checkHealth = async () => {
   const response = await api.get('/health')
+  return response.data
+}
+
+// ==========================================
+// PDF EXTRACTION API
+// ==========================================
+
+// Extract text from a PDF pitch deck
+export const extractPDF = async (file) => {
+  const formData = new FormData()
+  formData.append('file', file)
+  
+  const response = await api.post('/api/extract-pdf', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  })
   return response.data
 }
 
@@ -73,6 +108,44 @@ export const sendChatMessage = async (sessionId, message) => {
   const response = await api.post('/api/chat/message', {
     session_id: sessionId,
     message: message,
+  })
+  return response.data
+}
+
+// ==========================================
+// DECK UPLOAD & GENERATION API
+// ==========================================
+
+// Upload a PPTX/PDF deck and extract slides
+export const uploadDeck = async (file) => {
+  const formData = new FormData()
+  formData.append('file', file)
+  const response = await api.post('/api/upload-deck', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return response.data
+}
+
+// Analyze an uploaded deck (classify + score)
+export const analyzeDeck = async (deckId, investorPersona = 'growth_vc') => {
+  const formData = new FormData()
+  formData.append('deck_id', deckId)
+  formData.append('investor_persona', investorPersona)
+  const response = await api.post('/api/analyze-deck', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  })
+  return response.data
+}
+
+// Generate a refined PPTX deck (returns blob)
+export const generateRefinedDeck = async (deckId, investorPersona = 'growth_vc', startupName = 'Your Startup') => {
+  const formData = new FormData()
+  formData.append('deck_id', deckId)
+  formData.append('investor_persona', investorPersona)
+  formData.append('startup_name', startupName)
+  const response = await api.post('/api/generate-refined-deck', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    responseType: 'blob',
   })
   return response.data
 }

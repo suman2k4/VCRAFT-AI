@@ -4,8 +4,10 @@
 
 VCRAFT AI helps startup founders evaluate and improve their pitch decks using:
 - **RAG (Retrieval-Augmented Generation)** with real VC knowledge
-- **Persona-aware analysis** from different investor perspectives
+- **Persona-aware analysis** from 6 different investor perspectives
 - **VC Q&A simulation** to practice tough questions
+- **Interactive VC Chatbot** for multi-turn investor conversations
+- **PDF pitch deck upload** for seamless analysis
 - **Actionable feedback** based on proven frameworks (YC, Sequoia)
 
 ## 🎯 Project Purpose
@@ -196,6 +198,8 @@ Different investors care about different things:
 **Angel Investor**: Team, vision, market potential
 **Growth VC**: Scale, metrics, competitive position
 **Institutional**: Defensibility, profitability, risk
+**Deep Tech VC**: Technical innovation, IP moats, R&D depth
+**Impact Investor**: Social/environmental impact, SDG alignment
 
 Prompts and evaluation criteria adapt automatically.
 
@@ -232,6 +236,15 @@ Generate VC questions for Q&A.
 ### POST /api/evaluate-answer
 Evaluate founder's answer.
 
+### POST /api/extract-pdf
+Extract text from uploaded PDF pitch deck (max 10MB).
+
+### POST /api/chat/start
+Start an interactive chatbot session with VC persona.
+
+### POST /api/chat/message
+Send a message in an active chatbot session.
+
 See full API docs at `http://localhost:8000/docs` (FastAPI auto-generated)
 
 ## 🎓 For Academic Evaluation
@@ -267,7 +280,8 @@ A: Very. FAISS scales to millions of docs, FastAPI handles 1000s concurrent requ
 - Firebase handles auth tokens securely
 - Input validation with Pydantic
 - CORS configured for specific origins
-- Rate limiting (can be added via FastAPI middleware)
+- Rate limiting middleware (30 req/min per IP)
+- Password reset via Firebase
 
 ## 🚢 Deployment
 
@@ -291,13 +305,18 @@ vercel --prod
 
 ## 📈 Future Enhancements
 
-- [ ] PDF pitch deck upload and parsing
-- [ ] Comparison with successful pitch decks
+- [x] PDF pitch deck upload and parsing
+- [x] Comparison with successful pitch decks
+- [x] More investor personas (6 total: +Deep Tech VC, +Impact Investor)
+- [x] Export analysis as PDF report
+- [x] Advanced analytics dashboard
+- [x] Rate limiting middleware
+- [x] Interactive VC Chatbot
 - [ ] Collaborative feedback (share with team)
-- [ ] More investor personas (thesis-driven, sector-specific)
-- [ ] Export analysis as PDF report
 - [ ] Multi-language support
 - [ ] Integration with pitch deck builders (Canva, Pitch)
+- [ ] Caching layer (Redis)
+- [ ] Comprehensive testing suite
 
 ## 🤝 Contributing
 

@@ -3,7 +3,8 @@ import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
-  onAuthStateChanged 
+  onAuthStateChanged,
+  sendPasswordResetEmail
 } from 'firebase/auth'
 import { auth } from '../services/firebase'
 
@@ -44,11 +45,16 @@ export const AuthProvider = ({ children }) => {
     return signOut(auth)
   }
 
+  const resetPassword = (email) => {
+    return sendPasswordResetEmail(auth, email)
+  }
+
   const value = {
     user,
     signup,
     login,
     logout,
+    resetPassword,
   }
 
   return (

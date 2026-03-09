@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import { getPitchAnalysis } from '../services/firestore'
 import { startChatSession, sendChatMessage } from '../services/api'
 
@@ -8,11 +8,12 @@ const PERSONA_AVATARS = {
   angel: { emoji: '👼', color: 'bg-purple-500' },
   growth_vc: { emoji: '🚀', color: 'bg-green-500' },
   institutional: { emoji: '🏛️', color: 'bg-gray-700' },
+  deep_tech: { emoji: '🔬', color: 'bg-cyan-600' },
+  impact: { emoji: '🌍', color: 'bg-emerald-600' },
 }
 
 const ChatQA = () => {
   const { analysisId } = useParams()
-  const navigate = useNavigate()
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
 
@@ -149,13 +150,14 @@ const ChatQA = () => {
   // ── Loading State ──
   if (initializing) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="relative w-16 h-16 mx-auto mb-4">
-            <div className="absolute inset-0 rounded-full border-4 border-primary-200"></div>
-            <div className="absolute inset-0 rounded-full border-4 border-primary-600 border-t-transparent animate-spin"></div>
+      <div className="min-h-screen mesh-gradient flex items-center justify-center">
+        <div className="text-center animate-fade-in">
+          <div className="relative w-20 h-20 mx-auto mb-6">
+            <div className="absolute inset-0 rounded-full border-4 border-primary-100"></div>
+            <div className="absolute inset-0 rounded-full border-4 border-primary-500 border-t-transparent animate-spin"></div>
+            <div className="absolute inset-2 rounded-full border-4 border-primary-200 border-b-transparent animate-spin" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
           </div>
-          <h3 className="text-lg font-semibold text-gray-900 mb-1">Setting up your interview...</h3>
+          <h3 className="text-lg font-bold text-gray-800 mb-1">Setting up your interview...</h3>
           <p className="text-sm text-gray-500">The investor is reviewing your pitch</p>
         </div>
       </div>
@@ -165,11 +167,11 @@ const ChatQA = () => {
   // ── Error State ──
   if (error && !sessionId) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-        <div className="card max-w-md w-full text-center">
-          <div className="text-4xl mb-4">😕</div>
-          <h3 className="text-xl font-bold text-gray-900 mb-2">Session Error</h3>
-          <p className="text-gray-600 mb-6">{error}</p>
+      <div className="min-h-screen mesh-gradient flex items-center justify-center px-4">
+        <div className="card max-w-md w-full text-center animate-scale-in">
+          <div className="text-5xl mb-4">😕</div>
+          <h3 className="text-xl font-extrabold text-gray-800 mb-2">Session Error</h3>
+          <p className="text-gray-500 mb-6">{error}</p>
           <Link to="/submit" className="btn-primary inline-block">Analyze a Pitch First</Link>
         </div>
       </div>
@@ -177,9 +179,9 @@ const ChatQA = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 flex flex-col">
-      {/* ── Header Bar ── */}
-      <div className="bg-white border-b border-gray-200 shadow-sm sticky top-0 z-10">
+    <div className="min-h-screen mesh-gradient flex flex-col">
+      {/* ── Header Bar ── Glassmorphism */}
+      <div className="frosted border-b border-white/20 shadow-glass sticky top-0 z-10">
         <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className={`w-10 h-10 rounded-full ${avatarInfo.color} flex items-center justify-center text-lg shadow-md`}>
@@ -238,12 +240,12 @@ const ChatQA = () => {
                   </div>
                 )}
 
-                {/* Bubble */}
+                {/* Bubble — Glass */}
                 <div
-                  className={`rounded-2xl px-4 py-3 shadow-sm ${
+                  className={`rounded-2xl px-4 py-3 shadow-glass ${
                     msg.role === 'founder'
-                      ? 'bg-primary-600 text-white rounded-br-md'
-                      : 'bg-white text-gray-800 rounded-bl-md border border-gray-100'
+                      ? 'bg-gradient-to-br from-primary-500 to-primary-600 text-white rounded-br-md'
+                      : 'bg-white/70 backdrop-blur-xl text-gray-800 rounded-bl-md border border-white/30'
                   }`}
                 >
                   <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.content}</p>
@@ -251,7 +253,7 @@ const ChatQA = () => {
 
                 {/* Score card for investor messages */}
                 {msg.role === 'investor' && msg.score != null && (
-                  <div className="mt-2 bg-white border border-gray-100 rounded-xl p-3 shadow-sm">
+                  <div className="mt-2 bg-white/60 backdrop-blur-xl border border-white/30 rounded-xl p-3 shadow-glass">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Answer Evaluation</span>
                       {getScoreBadge(msg.score)}
@@ -290,7 +292,7 @@ const ChatQA = () => {
                   </div>
                   <span className="text-xs font-medium text-gray-500">{investorName}</span>
                 </div>
-                <div className="bg-white rounded-2xl rounded-bl-md px-4 py-3 shadow-sm border border-gray-100">
+                <div className="bg-white/70 backdrop-blur-xl rounded-2xl rounded-bl-md px-4 py-3 shadow-glass border border-white/30">
                   <div className="flex space-x-1.5">
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
                     <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
@@ -342,10 +344,10 @@ const ChatQA = () => {
 
       {/* ── Input Area ── */}
       {!sessionComplete && (
-        <div className="bg-white border-t border-gray-200 shadow-lg">
+        <div className="frosted border-t border-white/20 shadow-glass">
           <div className="max-w-4xl mx-auto px-4 py-3">
             {error && (
-              <div className="bg-red-50 text-red-600 text-xs px-3 py-1.5 rounded-lg mb-2">
+              <div className="bg-red-500/10 backdrop-blur-sm text-red-600 text-xs px-3 py-1.5 rounded-xl mb-2 border border-red-500/20">
                 {error}
               </div>
             )}
@@ -357,7 +359,7 @@ const ChatQA = () => {
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
                   rows={1}
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-2xl resize-none focus:ring-2 focus:ring-primary-500 focus:border-transparent outline-none text-sm placeholder-gray-400 max-h-32 overflow-y-auto"
+                  className="w-full px-4 py-3 bg-white/40 backdrop-blur-sm border border-white/30 rounded-2xl resize-none focus:ring-2 focus:ring-primary-500/30 focus:border-primary-400/50 focus:bg-white/60 outline-none text-sm placeholder-gray-400 max-h-32 overflow-y-auto transition-all duration-300"
                   placeholder="Type your answer... (Enter to send, Shift+Enter for new line)"
                   disabled={loading}
                   style={{ minHeight: '44px' }}

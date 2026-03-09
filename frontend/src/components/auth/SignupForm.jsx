@@ -34,20 +34,20 @@ const SignupForm = ({ onClose, onSwitchToLogin }) => {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg p-8 max-w-md w-full">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+      <div className="bg-white/70 backdrop-blur-2xl rounded-2xl p-8 max-w-md w-full shadow-glass-lg border border-white/30 animate-scale-in">
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Sign Up</h2>
+          <h2 className="text-2xl font-extrabold text-gray-800">Sign Up</h2>
           <button 
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600"
+            className="text-gray-400 hover:text-gray-600 w-8 h-8 rounded-full hover:bg-white/50 flex items-center justify-center transition-all"
           >
             ✕
           </button>
         </div>
 
         {error && (
-          <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4">
+          <div className="bg-red-500/10 backdrop-blur-sm text-red-600 p-3 rounded-xl mb-4 border border-red-500/20">
             {error}
           </div>
         )}

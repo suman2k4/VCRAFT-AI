@@ -49,7 +49,7 @@ You now have a **production-grade, final-year-ready** AI web application with fu
 - ✅ **Knowledge Base** - 3 curated VC documents (YC, Sequoia, pitch guidelines)
 
 **Prompts:**
-- ✅ **Persona Definitions** - 4 investor personas with priorities
+- ✅ **Persona Definitions** - 6 investor personas with priorities
 - ✅ **Analysis Prompts** - Persona-aware evaluation templates
 - ✅ **Q&A Prompts** - Question generation and answer evaluation
 - ✅ **System Prompts** - Role definition for LLM
@@ -58,6 +58,9 @@ You now have a **production-grade, final-year-ready** AI web application with fu
 - ✅ POST `/api/analyze-pitch` - Pitch analysis with RAG
 - ✅ POST `/api/generate-questions` - VC question generation
 - ✅ POST `/api/evaluate-answer` - Answer scoring
+- ✅ POST `/api/extract-pdf` - PDF pitch deck extraction (Phase 2)
+- ✅ POST `/api/chat/start` - Start chatbot session (Phase 2)
+- ✅ POST `/api/chat/message` - Send chatbot message (Phase 2)
 - ✅ GET `/health` - Health check
 
 **Models (Pydantic):**
@@ -81,7 +84,7 @@ You now have a **production-grade, final-year-ready** AI web application with fu
 - ✅ Save/load functionality
 
 ### 2. Persona-Aware Analysis
-- ✅ 4 investor personas (SaaS, Angel, Growth VC, Institutional)
+- ✅ 6 investor personas (SaaS, Angel, Growth VC, Institutional, Deep Tech, Impact)
 - ✅ Different priorities per persona
 - ✅ Adaptive evaluation criteria
 - ✅ Persona-specific questions
@@ -102,9 +105,20 @@ You now have a **production-grade, final-year-ready** AI web application with fu
 
 ### 5. User System
 - ✅ Firebase email/password auth
+- ✅ Password reset flow
 - ✅ User-specific pitch history
 - ✅ Firestore data persistence
 - ✅ Protected routes
+
+### 6. Phase 2 Features (NEW)
+- ✅ **PDF Pitch Deck Upload**: Drag-drop upload with PyPDF2 extraction
+- ✅ **Export Analysis as PDF**: Browser print with styled HTML report
+- ✅ **Advanced Analytics Dashboard**: Score trends, skill breakdown, score distribution
+- ✅ **Pitch Comparison View**: Side-by-side comparison with diff badges
+- ✅ **Rate Limiting**: 30 requests/min per IP via middleware
+- ✅ **Toast Notifications**: Success/error/info/warning with auto-dismiss
+- ✅ **Mobile Responsive Menu**: Hamburger menu with sticky nav
+- ✅ **Interactive VC Chatbot**: Multi-turn persona-aware conversations
 
 ---
 
@@ -281,50 +295,57 @@ npm run dev
 ## 📁 File Count Summary
 
 **Frontend:**
-- Pages: 4 (Landing, Submit, Dashboard, QA)
-- Components: 8+ (Navbar, Footer, Forms, etc.)
+- Pages: 6 (Landing, Submit, Dashboard, QA, Chat, PitchCompare)
+- Components: 12+ (Navbar, Footer, Forms, Toast, AnalysisResult, etc.)
 - Services: 3 (API, Firebase, Firestore)
-- Context: 1 (Auth)
+- Context: 2 (Auth, Toast)
 - Config: 6 (package.json, vite, tailwind, etc.)
 
 **Backend:**
-- Services: 4 (Pitch Analyzer, LLM, Q&A, RAG)
+- Services: 5 (Pitch Analyzer, LLM, Q&A, RAG, Chatbot)
 - RAG: 3 (Embeddings, Vector Store, Retriever)
 - Prompts: 3 (Personas, Analysis, Q&A)
-- Models: 3 (Pitch, Analysis, Q&A)
-- API: 1 (Routes)
+- Models: 4 (Pitch, Analysis, Q&A, Chat)
+- API: 1 (Routes - 7 endpoints)
 - Knowledge Base: 3 (VC documents)
 - Config: 3 (Settings, main, requirements)
 
 **Documentation:**
 - README.md
 - PROJECT_STRUCTURE.md
+- FEATURES_CHECKLIST.md
+- IMPLEMENTATION_SUMMARY.md
 - SETUP.md
 - API_CONTRACTS.md
 
-**Total: 50+ files**
+**Total: 75+ files**
 
 ---
 
 ## ✨ Unique Features
 
 1. **RAG-Powered**: Not just LLM - retrieves real VC knowledge
-2. **Persona-Aware**: Adapts to investor type
+2. **Persona-Aware**: Adapts to 6 investor types
 3. **Q&A Practice**: Unique simulator for founder prep
-4. **Structured Scoring**: Section-wise evaluation
-5. **Production-Ready**: Not a prototype - deployable code
+4. **Interactive Chatbot**: Multi-turn VC conversations
+5. **Structured Scoring**: Section-wise evaluation
+6. **PDF Upload**: Upload pitch decks for analysis
+7. **Analytics Dashboard**: Track progress over time
+8. **Pitch Comparison**: Side-by-side analysis
+9. **Production-Ready**: Rate limiting, toast notifications, mobile responsive
 
 ---
 
 ## 🔄 Extensibility
 
 Easy to add:
-- ✅ More investor personas
+- ✅ More investor personas (DONE - 6 total)
 - ✅ More VC knowledge documents
-- ✅ PDF pitch deck parsing
-- ✅ Comparison with successful pitches
-- ✅ Export to PDF
-- ✅ Team collaboration features
+- ✅ PDF pitch deck parsing (DONE)
+- ✅ Comparison with successful pitches (DONE - Pitch Compare)
+- ✅ Export to PDF (DONE)
+- [ ] Team collaboration features
+- [ ] Multi-language support
 
 ---
 

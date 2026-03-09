@@ -2,7 +2,7 @@ import faiss
 import numpy as np
 import pickle
 import os
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 from pathlib import Path
 
 class VectorStore:
@@ -27,15 +27,18 @@ class VectorStore:
         # Good for up to 1M vectors on CPU
         self.index = faiss.IndexFlatL2(dimension)
         self.documents = []  # Store original text chunks
+        self.metadata = []   # Store source info per chunk
         print(f"Initialized FAISS index with dimension {dimension}")
     
-    def add_documents(self, embeddings: np.ndarray, documents: List[str]):
+    def add_documents(self, embeddings: np.ndarray, documents: List[str],
+                      metadata: Optional[List[str]] = None):
         """
         Add document embeddings to the index.
         
         Args:
             embeddings: numpy array of shape (num_docs, dimension)
             documents: List of document text chunks
+            metadata: Optional list of source identifiers per chunk
         """
         if embeddings.shape[1] != self.dimension:
             raise ValueError(f"Embedding dimension mismatch. Expected {self.dimension}, got {embeddings.shape[1]}")
@@ -43,10 +46,11 @@ class VectorStore:
         # Add to FAISS index
         self.index.add(embeddings)
         self.documents.extend(documents)
+        self.metadata.extend(metadata or ["unknown"] * len(documents))
         
         print(f"Added {len(documents)} documents. Total documents: {len(self.documents)}")
     
-    def search(self, query_embedding: np.ndarray, k: int = 5) -> Tuple[List[str], List[float]]:
+    def search(self, query_embedding: np.ndarray, k: int = 5) -> Tuple[List[str], List[float], List[str]]:
         """
         Search for top-k most similar documents.
         
@@ -55,10 +59,10 @@ class VectorStore:
             k: Number of results to return
             
         Returns:
-            Tuple of (documents, distances)
+            Tuple of (documents, distances, sources)
         """
         if len(self.documents) == 0:
-            return [], []
+            return [], [], []
         
         # Ensure query is 2D: (1, dimension)
         if query_embedding.ndim == 1:
@@ -70,9 +74,10 @@ class VectorStore:
         
         # Get corresponding documents
         results = [self.documents[idx] for idx in indices[0]]
+        sources = [self.metadata[idx] if idx < len(self.metadata) else "unknown" for idx in indices[0]]
         scores = distances[0].tolist()
         
-        return results, scores
+        return results, scores, sources
     
     def save(self, path: str):
         """
@@ -87,10 +92,10 @@ class VectorStore:
         index_path = os.path.join(path, "faiss.index")
         faiss.write_index(self.index, index_path)
         
-        # Save documents
+        # Save documents and metadata
         docs_path = os.path.join(path, "documents.pkl")
         with open(docs_path, 'wb') as f:
-            pickle.dump(self.documents, f)
+            pickle.dump({"documents": self.documents, "metadata": self.metadata}, f)
         
         print(f"Saved vector store to {path}")
     
@@ -110,9 +115,16 @@ class VectorStore:
         # Load FAISS index
         self.index = faiss.read_index(index_path)
         
-        # Load documents
+        # Load documents and metadata
         with open(docs_path, 'rb') as f:
-            self.documents = pickle.load(f)
+            data = pickle.load(f)
+        if isinstance(data, dict):
+            self.documents = data.get("documents", [])
+            self.metadata = data.get("metadata", ["unknown"] * len(self.documents))
+        else:
+            # Backward compat: old format stored just a list
+            self.documents = data
+            self.metadata = ["unknown"] * len(self.documents)
         
         print(f"Loaded vector store from {path}. Total documents: {len(self.documents)}")
     

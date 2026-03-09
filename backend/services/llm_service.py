@@ -10,14 +10,11 @@ Forces JSON output and handles parsing.
 
 import json
 import re
-import os
 import asyncio
 import logging
 from typing import Dict, Any, Optional
 from config.settings import get_settings
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 settings = get_settings()
@@ -45,7 +42,7 @@ class LLMService:
         else:
             raise ValueError(f"Unsupported LLM provider: {self.provider}")
         
-        print(f"Initialized LLM service with provider: {self.provider}")
+        logger.info(f"Initialized LLM service with provider: {self.provider}")
     
     def _init_gemini(self):
         """Initialize Google Gemini."""
@@ -168,19 +165,13 @@ class LLMService:
         
         Uses asyncio.to_thread to avoid blocking the event loop with sync SDK calls.
         Includes retry logic for transient failures.
+        Uses native system_instruction when available.
         """
         last_error = None
         max_retries = 2
         
         for attempt in range(max_retries + 1):
             try:
-                # Combine system prompt and user prompt
-                full_prompt = ""
-                if system_prompt:
-                    full_prompt = f"{system_prompt}\n\n{prompt}"
-                else:
-                    full_prompt = prompt
-                
                 if attempt > 0:
                     # Exponential backoff for retries (especially for rate limits)
                     wait_time = 5 * (2 ** (attempt - 1))  # 5s, 10s
@@ -188,13 +179,27 @@ class LLMService:
                     await asyncio.sleep(wait_time)
                 logger.info(f"[LLM] Calling Gemini API (model: {self.model_name})...")
                 
+                # Build config — inject system_instruction if provided
+                config = self.generation_config
+                if system_prompt:
+                    from google import genai
+                    config = genai.types.GenerateContentConfig(
+                        temperature=self.generation_config.temperature,
+                        top_p=self.generation_config.top_p,
+                        top_k=self.generation_config.top_k,
+                        max_output_tokens=self.generation_config.max_output_tokens,
+                        system_instruction=system_prompt,
+                    )
+                
+                user_prompt = prompt
+                
                 # Run sync Gemini SDK call in a thread to avoid blocking event loop
                 try:
                     def _call_gemini_sync():
                         return self.client.models.generate_content(
                             model=self.model_name,
-                            contents=full_prompt,
-                            config=self.generation_config
+                            contents=user_prompt,
+                            config=config
                         )
                     
                     # 60-second hard timeout (thinking models need more time)
@@ -248,46 +253,73 @@ class LLMService:
         raise last_error or RuntimeError("LLM generation failed after all retries")
     
     async def _generate_openai(self, prompt: str, system_prompt: Optional[str] = None) -> Dict[str, Any]:
-        """Generate with OpenAI. Uses asyncio.to_thread for sync SDK."""
-        text = ""
-        try:
-            messages = []
-            
-            if system_prompt:
-                messages.append({"role": "system", "content": system_prompt})
-            
-            messages.append({"role": "user", "content": prompt})
-            
-            # Run sync OpenAI call in thread to avoid blocking event loop
-            def _call_openai_sync():
-                return self.client.chat.completions.create(
-                    model=self.model_name,
-                    messages=messages,
-                    temperature=0.7,
-                    max_tokens=2048,
-                    response_format={"type": "json_object"}  # Force JSON output
+        """
+        Generate with OpenAI.
+        
+        Uses asyncio.to_thread for sync SDK. Includes retry logic with
+        exponential backoff for parity with Gemini.
+        """
+        last_error = None
+        max_retries = 2
+        
+        for attempt in range(max_retries + 1):
+            text = ""
+            try:
+                if attempt > 0:
+                    wait_time = 5 * (2 ** (attempt - 1))  # 5s, 10s
+                    logger.info(f"[LLM] OpenAI retry {attempt}/{max_retries} after {wait_time}s backoff...")
+                    await asyncio.sleep(wait_time)
+                
+                messages = []
+                if system_prompt:
+                    messages.append({"role": "system", "content": system_prompt})
+                messages.append({"role": "user", "content": prompt})
+                
+                # Run sync OpenAI call in thread to avoid blocking event loop
+                def _call_openai_sync():
+                    return self.client.chat.completions.create(
+                        model=self.model_name,
+                        messages=messages,
+                        temperature=0.7,
+                        max_tokens=8192,
+                        response_format={"type": "json_object"}  # Force JSON output
+                    )
+                
+                response = await asyncio.wait_for(
+                    asyncio.to_thread(_call_openai_sync),
+                    timeout=60.0
                 )
-            
-            response = await asyncio.wait_for(
-                asyncio.to_thread(_call_openai_sync),
-                timeout=30.0
-            )
-            
-            # Extract and parse JSON
-            text = response.choices[0].message.content
-            result = json.loads(text)
-            return result
-            
-        except asyncio.TimeoutError:
-            logger.error("[LLM] ✗ OpenAI API timeout (30 seconds)")
-            raise RuntimeError("LLM request timed out after 30 seconds")
-        except json.JSONDecodeError as e:
-            logger.error(f"[LLM] JSON parsing error: {e}")
-            logger.error(f"[LLM] Raw response: {text[:500]}")
-            raise ValueError(f"LLM did not return valid JSON: {e}")
-        except Exception as e:
-            logger.error(f"[LLM] OpenAI generation error: {e}")
-            raise RuntimeError(f"Failed to generate with OpenAI: {e}")
+                
+                # Log token usage
+                if response.usage:
+                    logger.info(
+                        f"[LLM] OpenAI usage — prompt: {response.usage.prompt_tokens}, "
+                        f"completion: {response.usage.completion_tokens}, "
+                        f"total: {response.usage.total_tokens}"
+                    )
+                
+                # Extract and parse JSON
+                text = response.choices[0].message.content
+                result = self._extract_json_from_text(text)
+                logger.info("[LLM] ✓ OpenAI response parsed successfully")
+                return result
+                
+            except asyncio.TimeoutError:
+                logger.error("[LLM] ✗ OpenAI API timeout (60 seconds)")
+                last_error = RuntimeError("LLM request timed out after 60 seconds")
+                continue
+            except json.JSONDecodeError as e:
+                logger.error(f"[LLM] JSON parsing error (attempt {attempt}): {e}")
+                logger.error(f"[LLM] Raw response: {text[:500]}")
+                last_error = ValueError(f"LLM did not return valid JSON: {e}")
+                continue
+            except Exception as e:
+                logger.error(f"[LLM] OpenAI error (attempt {attempt}): {type(e).__name__}: {e}")
+                last_error = RuntimeError(f"Failed to generate with OpenAI: {e}")
+                continue
+        
+        # All retries exhausted
+        raise last_error or RuntimeError("OpenAI generation failed after all retries")
 
 # Global instance
 _llm_service = None

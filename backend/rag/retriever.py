@@ -48,12 +48,14 @@ class RAGRetriever:
             return
         
         documents = []
+        metadata = []  # Track source file per chunk
         for file_path in kb_path.glob("*.txt"):
             with open(file_path, 'r', encoding='utf-8') as f:
                 content = f.read()
                 # Chunk the document (simple approach: split by paragraphs)
                 chunks = self._chunk_text(content, chunk_size=500, overlap=50)
                 documents.extend(chunks)
+                metadata.extend([file_path.stem] * len(chunks))
                 print(f"Loaded {len(chunks)} chunks from {file_path.name}")
         
         if len(documents) == 0:
@@ -65,12 +67,12 @@ class RAGRetriever:
         embeddings = self.embedding_service.embed_batch(documents)
         
         # Add to vector store
-        self.vector_store.add_documents(embeddings, documents)
+        self.vector_store.add_documents(embeddings, documents, metadata)
         
         self.initialized = True
         print(f"Knowledge base initialized with {len(documents)} chunks")
     
-    def retrieve(self, query: str, top_k: int = 5) -> List[str]:
+    def retrieve(self, query: str, top_k: int = 5) -> List[dict]:
         """
         Retrieve top-k most relevant documents for a query.
         
@@ -81,7 +83,7 @@ class RAGRetriever:
             top_k: Number of relevant chunks to retrieve
             
         Returns:
-            List of relevant text chunks from VC knowledge
+            List of dicts with 'text' and 'source' keys
         """
         if not self.initialized or self.vector_store.size() == 0:
             print("WARNING: Knowledge base not initialized. Returning empty context.")
@@ -91,11 +93,14 @@ class RAGRetriever:
         query_embedding = self.embedding_service.embed_text(query)
         
         # Search vector store
-        documents, scores = self.vector_store.search(query_embedding, k=top_k)
+        documents, scores, sources = self.vector_store.search(query_embedding, k=top_k)
         
         print(f"Retrieved {len(documents)} documents with scores: {[f'{s:.3f}' for s in scores]}")
         
-        return documents
+        return [
+            {"text": doc, "source": src}
+            for doc, src in zip(documents, sources)
+        ]
     
     def retrieve_with_context(self, query: str, context_prefix: str = "", top_k: int = 5) -> str:
         """
@@ -114,13 +119,14 @@ class RAGRetriever:
         if len(documents) == 0:
             return "Insufficient data in knowledge base."
         
-        # Format retrieved documents
+        # Format retrieved documents with source attribution
         context = context_prefix + "\n\n" if context_prefix else ""
         context += "RELEVANT VC KNOWLEDGE:\n"
         context += "=" * 50 + "\n\n"
         
         for i, doc in enumerate(documents, 1):
-            context += f"[Source {i}]\n{doc}\n\n"
+            source_label = doc["source"].replace("_", " ").title()
+            context += f"[Source {i}: {source_label}]\n{doc['text']}\n\n"
         
         context += "=" * 50 + "\n"
         context += "USE ONLY THE ABOVE KNOWLEDGE TO ANSWER. DO NOT HALLUCINATE.\n"

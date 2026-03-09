@@ -1,20 +1,29 @@
 # Backend Dependencies
-fastapi>=0.109.0
-uvicorn[standard]>=0.27.0
-pydantic>=2.5.0
-pydantic-settings>=2.1.0
-python-dotenv>=1.0.0
+fastapi==0.133.1
+uvicorn[standard]==0.41.0
+pydantic==2.12.5
+pydantic-settings==2.13.1
+python-dotenv==1.2.1
 
 # AI/ML
-sentence-transformers>=2.2.0
-faiss-cpu>=1.7.4
-google-genai>=1.0.0
-openai>=1.10.0
+sentence-transformers==5.2.3
+faiss-cpu==1.13.2
+google-genai==1.65.0
+openai==2.24.0
 
 # Firebase
-firebase-admin>=6.3.0
+firebase-admin==7.2.0
 
 # Utilities
-python-multipart>=0.0.6
-aiofiles>=23.2.1
-PyPDF2>=3.0.1
+python-multipart==0.0.22
+aiofiles==25.1.0
+PyPDF2==3.0.1
+httpx==0.28.1
+
+# Deck Upload & Generation
+python-pptx==1.0.2
+pdfplumber==0.11.9
+
+# Testing (install with: pip install -r requirements.txt)
+pytest>=8.0.0
+pytest-asyncio>=0.23.0

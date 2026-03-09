@@ -1,18 +1,18 @@
 const Footer = () => {
   return (
-    <footer className="bg-gray-900 text-gray-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col md:flex-row justify-between items-center">
-          <div className="mb-4 md:mb-0">
-            <span className="text-xl font-bold text-white">VCRAFT</span>
-            <span className="text-xl font-light text-gray-400 ml-1">AI</span>
-            <p className="text-sm text-gray-400 mt-2">
-              AI-powered pitch deck analysis for startups
-            </p>
+    <footer className="relative bg-gray-900/95 backdrop-blur-xl text-gray-300 border-t border-white/5">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+          <div className="flex items-center gap-3">
+            <span className="text-xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-primary-400 to-orange-300">VCRAFT</span>
+            <span className="text-xl font-light text-gray-500">AI</span>
+            <span className="hidden sm:inline text-gray-600 ml-2 pl-3 border-l border-gray-700/50 text-sm">
+              AI-powered pitch intelligence for startups
+            </span>
           </div>
           
-          <div className="text-sm text-gray-400">
-            © {new Date().getFullYear()} VCRAFT AI. Built for founders.
+          <div className="text-sm text-gray-500">
+            &copy; {new Date().getFullYear()} VCRAFT AI &middot; Built for founders
           </div>
         </div>
       </div>

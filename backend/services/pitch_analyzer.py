@@ -27,8 +27,6 @@ from rag.retriever import get_rag_retriever
 from prompts.analysis_prompts import get_analysis_prompt, get_system_prompt
 from config.settings import get_settings
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 class PitchAnalyzer:
@@ -311,7 +309,7 @@ class PitchAnalyzer:
             errors.append("Startup idea must be at least 50 characters")
         
         # Check valid persona
-        valid_personas = ['saas', 'angel', 'growth_vc', 'institutional']
+        valid_personas = ['saas', 'angel', 'growth_vc', 'institutional', 'deep_tech', 'impact']
         if pitch_request.investor_persona not in valid_personas:
             errors.append(f"Invalid investor persona. Must be one of: {valid_personas}")
         

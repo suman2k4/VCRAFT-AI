@@ -22,8 +22,8 @@ class AnalysisResponse(BaseModel):
     feedback: Dict[str, str]
     recommendations: List[str]
     
-    class Config:
-        json_schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "analysis_id": "abc123",
                 "overall_score": 75,
@@ -44,3 +44,4 @@ class AnalysisResponse(BaseModel):
                 ]
             }
         }
+    }

@@ -9,6 +9,7 @@ import {
   where, 
   orderBy,
   limit,
+  startAfter,
   Timestamp 
 } from 'firebase/firestore'
 import { db } from './firebase'
@@ -32,26 +33,69 @@ export const savePitchAnalysis = async (userId, pitchData, analysisResult) => {
   }
 }
 
-// Get user's pitch history
-export const getUserPitches = async (userId) => {
+// Get user's pitch history (paginated, server-side)
+// Returns { pitches, lastDoc } where lastDoc can be passed for the next page.
+export const getUserPitches = async (userId, pageSize = 20, lastDocument = null) => {
   try {
-    const q = query(
+    const constraints = [
       collection(db, 'pitches'),
-      where('user_id', '==', userId)
-    )
+      where('user_id', '==', userId),
+      orderBy('created_at', 'desc'),
+      limit(pageSize),
+    ]
+
+    // If we have a cursor from a previous page, start after it
+    if (lastDocument) {
+      constraints.splice(3, 0, startAfter(lastDocument))
+    }
+
+    const q = query(...constraints)
     const querySnapshot = await getDocs(q)
-    const results = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data(),
+
+    const pitches = querySnapshot.docs.map(d => ({
+      id: d.id,
+      ...d.data(),
     }))
-    // Sort client-side to avoid requiring a Firestore composite index
-    results.sort((a, b) => {
-      const aTime = a.created_at?.toMillis?.() || 0
-      const bTime = b.created_at?.toMillis?.() || 0
-      return bTime - aTime
-    })
-    return results.slice(0, 20)
+
+    // Return the last document snapshot for cursor-based pagination
+    const lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1] || null
+
+    return { pitches, lastDoc }
   } catch (error) {
+    // Firestore composite-index errors — fallback to simple query with client-side sort
+    if (error.code === 'failed-precondition') {
+      console.warn(
+        'Firestore composite index not found — falling back to client-side sorting.',
+        'Create the index for better performance:',
+        error.message,
+      )
+
+      // Fallback: query without orderBy, then sort client-side
+      const fallbackConstraints = [
+        collection(db, 'pitches'),
+        where('user_id', '==', userId),
+        limit(pageSize),
+      ]
+
+      if (lastDocument) {
+        fallbackConstraints.splice(2, 0, startAfter(lastDocument))
+      }
+
+      const fallbackQuery = query(...fallbackConstraints)
+      const fallbackSnapshot = await getDocs(fallbackQuery)
+
+      const pitches = fallbackSnapshot.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .sort((a, b) => {
+          const timeA = a.created_at?.seconds || 0
+          const timeB = b.created_at?.seconds || 0
+          return timeB - timeA  // descending
+        })
+
+      const lastDoc = fallbackSnapshot.docs[fallbackSnapshot.docs.length - 1] || null
+      return { pitches, lastDoc }
+    }
+
     console.error('Error fetching pitches:', error)
     throw error
   }
@@ -107,6 +151,18 @@ export const getQASessions = async (pitchId) => {
       ...doc.data(),
     }))
   } catch (error) {
+    // Fallback for missing composite index
+    if (error.code === 'failed-precondition') {
+      console.warn('Firestore index missing for qa_sessions — using client-side sort')
+      const fallbackQ = query(
+        collection(db, 'qa_sessions'),
+        where('pitch_id', '==', pitchId)
+      )
+      const snap = await getDocs(fallbackQ)
+      return snap.docs
+        .map(doc => ({ id: doc.id, ...doc.data() }))
+        .sort((a, b) => (b.created_at?.seconds || 0) - (a.created_at?.seconds || 0))
+    }
     console.error('Error fetching Q&A sessions:', error)
     throw error
   }

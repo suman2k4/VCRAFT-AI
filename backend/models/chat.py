@@ -2,7 +2,7 @@
 Chat Models - Conversational Q&A chatbot models
 """
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from typing import List, Optional
 
 class ChatMessage(BaseModel):
@@ -14,10 +14,10 @@ class ChatMessage(BaseModel):
 
 class ChatStartRequest(BaseModel):
     """Start a new chatbot Q&A session."""
-    pitch_summary: str = Field(..., min_length=30, description="The startup pitch summary")
-    industry: str = Field(..., min_length=2, description="Startup industry")
-    investor_persona: str = Field(default="saas", description="Investor type")
-    investor_stage: str = Field(default="seed", description="Funding stage")
+    pitch_summary: str = Field(..., min_length=30, max_length=50000, description="The startup pitch summary")
+    industry: str = Field(..., min_length=2, max_length=100, description="Startup industry")
+    investor_persona: str = Field(default="saas", max_length=50, description="Investor type")
+    investor_stage: str = Field(default="seed", max_length=50, description="Funding stage")
 
 class ChatStartResponse(BaseModel):
     session_id: str
@@ -27,8 +27,8 @@ class ChatStartResponse(BaseModel):
 
 class ChatMessageRequest(BaseModel):
     """Send a message in an existing chat session."""
-    session_id: str = Field(..., description="Chat session ID")
-    message: str = Field(..., min_length=1, description="Founder's message")
+    session_id: str = Field(..., max_length=128, description="Chat session ID")
+    message: str = Field(..., min_length=1, max_length=10000, description="Founder's message")
 
 class ChatMessageResponse(BaseModel):
     """Investor's reply."""

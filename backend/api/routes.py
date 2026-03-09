@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from models.pitch import PitchRequest
 from models.analysis import AnalysisResponse
 from models.qa import QuestionRequest, QuestionResponse, AnswerRequest, AnswerEvaluation
@@ -9,17 +9,90 @@ from models.chat import (
 from services.pitch_analyzer import get_pitch_analyzer
 from services.qa_simulator import get_qa_simulator
 from services.chatbot_service import get_chatbot_service
+from services.sanitizer import sanitize_text, sanitize_field
 from prompts.personas import get_persona
+from api.auth import get_current_user
 import logging
+import io
 
-# Configure logging
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api", tags=["api"])
 
+
+# =============================================================================
+# PDF EXTRACTION ENDPOINT
+# =============================================================================
+
+@router.post("/extract-pdf")
+async def extract_pdf(file: UploadFile = File(...), user: dict = Depends(get_current_user)):
+    """
+    Extract text content from an uploaded PDF pitch deck.
+    
+    Supports multi-page PDFs. Returns extracted text for use
+    in pitch analysis form.
+    """
+    logger.info(f"[EXTRACT-PDF] Received file: {file.filename}")
+    
+    # Validate file type
+    if not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(
+            status_code=400,
+            detail="Only PDF files are supported. Please upload a .pdf file."
+        )
+    
+    # Check file size (max 10MB)
+    contents = await file.read()
+    if len(contents) > 10 * 1024 * 1024:
+        raise HTTPException(
+            status_code=400,
+            detail="File too large. Maximum size is 10MB."
+        )
+    
+    try:
+        from PyPDF2 import PdfReader
+        
+        pdf_reader = PdfReader(io.BytesIO(contents))
+        extracted_text = []
+        
+        for page_num, page in enumerate(pdf_reader.pages):
+            page_text = page.extract_text()
+            if page_text and page_text.strip():
+                extracted_text.append(page_text.strip())
+        
+        full_text = "\n\n".join(extracted_text)
+        
+        if not full_text.strip():
+            raise HTTPException(
+                status_code=400,
+                detail="Could not extract text from PDF. The file may be image-based or encrypted. Try copying text manually."
+            )
+        
+        logger.info(f"[EXTRACT-PDF] Extracted {len(full_text)} chars from {len(pdf_reader.pages)} pages")
+        
+        return {
+            "text": full_text,
+            "pages": len(pdf_reader.pages),
+            "characters": len(full_text),
+            "filename": file.filename
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"[EXTRACT-PDF] Error processing PDF: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to process PDF. The file may be corrupted or in an unsupported format."
+        )
+
+
+# =============================================================================
+# PITCH ANALYSIS ENDPOINT
+# =============================================================================
+
 @router.post("/analyze-pitch", response_model=AnalysisResponse)
-async def analyze_pitch(pitch_request: PitchRequest):
+async def analyze_pitch(pitch_request: PitchRequest, user: dict = Depends(get_current_user)):
     """
     Analyze a startup pitch using RAG + LLM.
     
@@ -35,9 +108,21 @@ async def analyze_pitch(pitch_request: PitchRequest):
     - Ensures JSON output
     - Never crashes the server
     """
-    logger.info(f"[ANALYZE-PITCH] Received request for {pitch_request.industry} startup")
+    logger.info(f"[ANALYZE-PITCH] Received request for {pitch_request.industry} startup (user={user['uid']})")
     
     try:
+        # SAFEGUARD 0: Sanitize user inputs
+        pitch_request.startup_idea = sanitize_text(
+            pitch_request.startup_idea, max_length=50000, field_name="startup_idea"
+        )
+        if pitch_request.pitch_deck_text:
+            pitch_request.pitch_deck_text = sanitize_text(
+                pitch_request.pitch_deck_text, max_length=100000, field_name="pitch_deck_text"
+            )
+        pitch_request.industry = sanitize_field(
+            pitch_request.industry, max_length=100, field_name="industry"
+        )
+
         # SAFEGUARD 1: Validate analyzer initialization (checks API keys)
         try:
             analyzer = get_pitch_analyzer()
@@ -97,7 +182,7 @@ async def analyze_pitch(pitch_request: PitchRequest):
 
 
 @router.post("/generate-questions", response_model=QuestionResponse)
-async def generate_questions(request: QuestionRequest):
+async def generate_questions(request: QuestionRequest, user: dict = Depends(get_current_user)):
     """
     Generate VC questions based on pitch and investor persona.
     
@@ -134,7 +219,7 @@ async def generate_questions(request: QuestionRequest):
 
 
 @router.post("/evaluate-answer", response_model=AnswerEvaluation)
-async def evaluate_answer(request: AnswerRequest):
+async def evaluate_answer(request: AnswerRequest, user: dict = Depends(get_current_user)):
     """
     Evaluate founder's answer to a VC question.
     
@@ -176,7 +261,7 @@ async def evaluate_answer(request: AnswerRequest):
 # =============================================================================
 
 @router.post("/chat/start", response_model=ChatStartResponse)
-async def chat_start(request: ChatStartRequest):
+async def chat_start(request: ChatStartRequest, user: dict = Depends(get_current_user)):
     """
     Start a new chatbot Q&A session.
     
@@ -213,7 +298,7 @@ async def chat_start(request: ChatStartRequest):
 
 
 @router.post("/chat/message", response_model=ChatMessageResponse)
-async def chat_message(request: ChatMessageRequest):
+async def chat_message(request: ChatMessageRequest, user: dict = Depends(get_current_user)):
     """
     Send a message in an ongoing chat session.
     

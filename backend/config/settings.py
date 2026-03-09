@@ -23,8 +23,7 @@ class Settings(BaseSettings):
     # Deployment
     frontend_url: str = ""  # Set to your Vercel URL in production
     
-    class Config:
-        env_file = ".env"
+    model_config = {"env_file": ".env"}
 
 @lru_cache()
 def get_settings():

@@ -5,15 +5,19 @@ Generates VC questions and evaluates founder answers.
 """
 
 import uuid
+import logging
 from typing import List
 from models.qa import QuestionRequest, QuestionResponse, AnswerRequest, AnswerEvaluation, Question
 from services.llm_service import get_llm_service
 from rag.retriever import get_rag_retriever
+from services.session_store import get_pitch_cache
 from prompts.qa_prompts import (
     get_question_generation_prompt,
     get_answer_evaluation_prompt,
     get_qa_system_prompt
 )
+
+logger = logging.getLogger(__name__)
 
 class QASimulator:
     """
@@ -23,8 +27,7 @@ class QASimulator:
     def __init__(self):
         self.llm_service = get_llm_service()
         self.rag_retriever = get_rag_retriever()
-        # In-memory storage for pitch context (in production, use database)
-        self.pitch_cache = {}
+        self.pitch_cache = get_pitch_cache()
     
     async def generate_questions(self, request: QuestionRequest, pitch_summary: str) -> QuestionResponse:
         """
@@ -38,7 +41,7 @@ class QASimulator:
             List of generated questions
         """
         
-        print(f"Generating {request.num_questions} questions for {request.investor_persona}")
+        logger.info(f"Generating {request.num_questions} questions for {request.investor_persona}")
         
         # Step 1: Retrieve VC questioning tactics
         rag_context = self.rag_retriever.retrieve_with_context(
@@ -71,7 +74,7 @@ class QASimulator:
             for q in result["questions"]
         ]
         
-        print(f"Generated {len(questions)} questions")
+        logger.info(f"Generated {len(questions)} questions")
         
         return QuestionResponse(questions=questions)
     
@@ -89,7 +92,7 @@ class QASimulator:
             Evaluation with score and feedback
         """
         
-        print(f"Evaluating answer to question: {request.question_id}")
+        logger.info(f"Evaluating answer to question: {request.question_id} (persona={request.investor_persona})")
         
         # Step 1: Retrieve VC evaluation criteria
         rag_context = self.rag_retriever.retrieve_with_context(
@@ -103,7 +106,7 @@ class QASimulator:
             question=question_text,
             answer=request.answer,
             pitch_context=pitch_context,
-            investor_persona="saas",  # TODO: Get from request
+            investor_persona=request.investor_persona or "saas",
             rag_context=rag_context
         )
         
@@ -119,17 +122,17 @@ class QASimulator:
             improvement_tips=result["improvement_tips"]
         )
         
-        print(f"Answer score: {evaluation.score}/10")
+        logger.info(f"Answer score: {evaluation.score}/10")
         
         return evaluation
     
     def cache_pitch_context(self, analysis_id: str, pitch_summary: str):
         """Store pitch context for Q&A session."""
-        self.pitch_cache[analysis_id] = pitch_summary
+        self.pitch_cache.set(analysis_id, pitch_summary)
     
     def get_pitch_context(self, analysis_id: str) -> str:
         """Retrieve cached pitch context."""
-        return self.pitch_cache.get(analysis_id, "")
+        return self.pitch_cache.get(analysis_id) or ""
 
 # Global instance
 _qa_simulator = None

@@ -88,6 +88,48 @@ INVESTOR_PERSONAS = {
             "governance",
             "strategic_fit"
         ]
+    },
+    
+    "deep_tech": {
+        "name": "Deep Tech VC",
+        "description": "Specializes in frontier technology: AI/ML, biotech, quantum computing, robotics. Values technical innovation, IP moats, and world-class engineering teams. Patient capital with long time horizons.",
+        "priorities": [
+            "Technical innovation and differentiation",
+            "Intellectual property and patent portfolio",
+            "R&D roadmap and timeline to commercialization",
+            "Team technical depth (PhDs, publications, domain expertise)",
+            "Platform potential and multiple use cases"
+        ],
+        "risk_tolerance": "high",
+        "typical_check_size": "$2M - $20M",
+        "questions_focus": [
+            "technical_architecture",
+            "ip_strategy",
+            "research_validation",
+            "team_expertise",
+            "commercialization_path"
+        ]
+    },
+    
+    "impact": {
+        "name": "Impact Investor",
+        "description": "Invests in startups that generate measurable social or environmental impact alongside financial returns. Focused on sustainability, ESG compliance, and UN SDG alignment.",
+        "priorities": [
+            "Measurable social or environmental impact",
+            "Alignment with UN Sustainable Development Goals",
+            "ESG compliance and reporting capability",
+            "Scalable impact model (impact per dollar invested)",
+            "Financial sustainability alongside mission"
+        ],
+        "risk_tolerance": "medium",
+        "typical_check_size": "$500K - $10M",
+        "questions_focus": [
+            "impact_measurement",
+            "sustainability_model",
+            "community_benefit",
+            "esg_compliance",
+            "mission_alignment"
+        ]
     }
 }
 
@@ -128,3 +170,25 @@ PRIORITIES:
     context += f"\nTYPICAL CHECK SIZE: {persona['typical_check_size']}"
     
     return context
+
+
+def get_persona_tone(persona_key: str) -> str:
+    """
+    Generate an investor-tone instruction for deck improvement prompts.
+
+    Derived dynamically from the persona definition so there is a single
+    source of truth (no duplicate dicts).
+
+    Args:
+        persona_key: Persona identifier
+
+    Returns:
+        A sentence describing the optimisation focus for the persona.
+    """
+    persona = get_persona(persona_key)
+    top_priorities = ", ".join(persona["priorities"][:3]).lower()
+    return (
+        f"Optimise for {persona['name'].lower()}s: "
+        f"emphasise {top_priorities}, and align with "
+        f"{persona['risk_tolerance']} risk tolerance."
+    )

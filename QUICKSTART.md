@@ -120,6 +120,22 @@ python initialize_rag.py
 - Ensure backend is running on port 8000
 - Check `VITE_API_BASE_URL=http://localhost:8000` in frontend/.env
 
+### Using ngrok for Backend Hosting
+If Render has port issues, use ngrok to expose your local backend:
+```bash
+# Install ngrok: https://ngrok.com/download (or: choco install ngrok)
+# Authenticate once:
+ngrok config add-authtoken YOUR_TOKEN
+
+# Start backend + ngrok tunnel:
+cd backend
+.\start_ngrok.ps1
+
+# Or use the combined launcher:
+.\start_app_ngrok.bat
+```
+Then set `VITE_API_BASE_URL=https://your-id.ngrok-free.app` in `frontend/.env` and restart the frontend.
+
 ---
 
 ## 📚 Next Steps
